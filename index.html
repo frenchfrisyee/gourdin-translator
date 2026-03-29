@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gourdin Code Translator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;0,600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pumpkin: #E8650A;
+    --ember: #C44B00;
+    --gold: #F5A623;
+    --gold-dim: #A07A30;
+    --cream: #FDF4E3;
+    --dark: #130800;
+    --panel: #1C0C00;
+    --border: rgba(232,101,10,0.22);
+    --muted: #9A7050;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    background-image:
+      radial-gradient(ellipse at 15% 40%, rgba(196,75,0,0.07) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 15%, rgba(245,166,35,0.04) 0%, transparent 45%);
+    font-family: 'Crimson Pro', Georgia, serif;
+    min-height: 100vh;
+    color: var(--cream);
+    padding: 40px 20px 80px;
+  }
+
+  .page { max-width: 860px; margin: 0 auto; }
+
+  header {
+    text-align: center;
+    margin-bottom: 44px;
+  }
+
+  .logo { font-size: 52px; display: block; margin-bottom: 12px; animation: float 4s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 52px;
+    color: var(--pumpkin);
+    letter-spacing: -1.5px;
+    line-height: 1;
+    margin-bottom: 6px;
+    text-shadow: 0 0 40px rgba(232,101,10,0.3);
+  }
+
+  .tagline {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    color: var(--gold-dim);
+    font-size: 17px;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 5px;
+  }
+
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+
+  .tab.active { background: var(--pumpkin); color: var(--dark); font-weight: 700; }
+  .tab:hover:not(.active) { color: var(--cream); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* CARD */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 40px;
+    margin-bottom: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(245,166,35,0.07);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--pumpkin), var(--gold), var(--pumpkin), transparent);
+    opacity: 0.5;
+  }
+
+  .label {
+    font-family: 'Playfair Display', serif;
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .label::after { content:''; flex:1; height:1px; background:rgba(232,101,10,0.12); }
+
+  textarea {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(232,101,10,0.18);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 19px;
+    color: var(--cream);
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 100px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    caret-color: var(--pumpkin);
+  }
+
+  textarea::placeholder { color: rgba(154,112,80,0.4); font-style: italic; }
+  textarea:focus { border-color: rgba(232,101,10,0.45); box-shadow: 0 0 0 3px rgba(232,101,10,0.07); }
+
+  .output-box {
+    background: rgba(232,101,10,0.05);
+    border: 1px solid rgba(232,101,10,0.18);
+    border-radius: 10px;
+    padding: 20px 22px;
+    min-height: 80px;
+    position: relative;
+  }
+
+  .code-output {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 18px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    line-height: 2;
+    word-break: break-all;
+  }
+
+  .breakdown {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(232,101,10,0.1);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .letter-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(232,101,10,0.15);
+    border-radius: 7px;
+    padding: 6px 10px;
+    min-width: 48px;
+  }
+
+  .chip-eng {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    color: var(--cream);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .chip-code {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--pumpkin);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .chip-space {
+    border-style: dashed;
+    opacity: 0.4;
+  }
+
+  .btn-row { display:flex; gap:10px; justify-content:center; margin: 20px 0 4px; }
+
+  button.primary {
+    background: var(--pumpkin);
+    color: var(--dark);
+    border: none;
+    border-radius: 10px;
+    padding: 13px 38px;
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(232,101,10,0.3);
+    position: relative;
+    overflow: hidden;
+  }
+  button.primary::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(255,255,255,0.1) 0%,transparent 100%); }
+  button.primary:hover { background:var(--ember); transform:translateY(-2px); box-shadow:0 8px 28px rgba(232,101,10,0.4); }
+  button.primary:active { transform:translateY(0); }
+
+  button.secondary {
+    background: rgba(232,101,10,0.1);
+    color: var(--muted);
+    border: 1px solid rgba(232,101,10,0.2);
+    border-radius: 10px;
+    padding: 13px 22px;
+    font-family: 'Crimson Pro', serif;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  button.secondary:hover { background:rgba(232,101,10,0.18); color:var(--cream); }
+
+  .copy-btn {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: rgba(232,101,10,0.1);
+    border: 1px solid rgba(232,101,10,0.2);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Crimson Pro', serif;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { color:var(--gold); background:rgba(232,101,10,0.18); }
+
+  .output-section { opacity:0; transform:translateY(10px); transition:all 0.35s ease; pointer-events:none; }
+  .output-section.visible { opacity:1; transform:translateY(0); pointer-events:all; }
+
+  /* REFERENCE TABLE */
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
+  .ref-intro {
+    color: var(--muted);
+    font-style: italic;
+    font-size: 16px;
+    margin-bottom: 22px;
+    line-height: 1.6;
+  }
+
+  .ref-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 7px;
+  }
+
+  .ref-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(232,101,10,0.1);
+    border-radius: 8px;
+    padding: 9px 14px;
+    transition: border-color 0.15s;
+  }
+
+  .ref-row:hover { border-color: rgba(232,101,10,0.3); }
+
+  .ref-letter {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--pumpkin);
+    font-weight: 700;
+    min-width: 22px;
+    text-align: center;
+  }
+
+  .ref-code {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 15px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    flex: 1;
+  }
+
+  .ref-name {
+    font-size: 12px;
+    color: rgba(154,112,80,0.6);
+    font-style: italic;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 16px 20px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 24px;
+    font-size: 15px;
+  }
+
+  .legend-item { display:flex; align-items:center; gap:10px; }
+  .legend-sym { font-family:'Share Tech Mono',monospace; font-size:18px; color:var(--pumpkin); }
+  .legend-desc { color:var(--muted); }
+
+  .error-text { color: #E05555; font-style: italic; }
+
+  .pills { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .pill {
+    background: rgba(232,101,10,0.08);
+    border: 1px solid rgba(232,101,10,0.16);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-style: italic;
+  }
+  .pill:hover { background:rgba(232,101,10,0.16); border-color:var(--pumpkin); color:var(--cream); }
+
+  .footer-note {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 13px;
+    color: rgba(154,112,80,0.3);
+    font-style: italic;
+  }
+
+  .decoded-output {
+    font-family: 'Crimson Pro', serif;
+    font-size: 22px;
+    color: var(--cream);
+    font-style: italic;
+    line-height: 1.7;
+    word-break: break-word;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <span class="logo">🎃</span>
+    <h1>Gourdin Code</h1>
+    <div class="tagline">The Pumpkin Cipher — encode any text into the sacred script</div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('encode')">✦ Encode</div>
+    <div class="tab" onclick="switchTab('decode')">◎ Decode</div>
+    <div class="tab" onclick="switchTab('reference')">⊙ Reference</div>
+  </div>
+
+  <!-- ENCODE -->
+  <div class="panel active" id="panel-encode">
+    <div class="card">
+      <div class="label">English text</div>
+      <textarea id="encodeInput" placeholder="Type anything… e.g. hello friend" rows="3"></textarea>
+
+      <div class="btn-row">
+        <button class="primary" onclick="encode()">✦ Encode</button>
+        <button class="secondary" onclick="document.getElementById('encodeInput').value='';hideOutput('encodeOut')">Clear</button>
+      </div>
+
+      <div class="pills">
+        <div class="pill" onclick="setEx('encodeInput','hello friend')">hello friend</div>
+        <div class="pill" onclick="setEx('encodeInput','the pumpkin is ripe')">the pumpkin is ripe</div>
+        <div class="pill" onclick="setEx('encodeInput','may you be complete')">may you be complete</div>
+        <div class="pill" onclick="setEx('encodeInput','this is not a squash')">this is not a squash</div>
+        <div class="pill" onclick="setEx('encodeInput','i carry the seeds')">i carry the seeds</div>
+      </div>
+    </div>
+
+    <div class="output-section" id="encodeOut">
+      <div class="card">
+        <div class="label">Gourdin Code</div>
+        <div class="output-box">
+          <button class="copy-btn" id="encodeCopyBtn" onclick="copyText('encodeCopyBtn', 'encodedFull')">Copy</button>
+          <div class="code-output" id="encodedFull"></div>
+          <div class="breakdown" id="encodedBreakdown"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DECODE -->
+  <div class="panel" id="panel-decode">
+    <div class="card">
+      <div class="label">Gourdin Code</div>
+      <textarea id="decodeInput" placeholder="Paste Gourdin code here… e.g. @> ?^ !! |0" rows="3"></textarea>
+
+      <div class="btn-row">
+        <button class="primary" onclick="decode()">◎ Decode</button>
+        <button class="secondary" onclick="document.getElementById('decodeInput').value='';hideOutput('decodeOut')">Clear</button>
+      </div>
+    </div>
+
+    <div class="output-section" id="decodeOut">
+      <div class="card">
+        <div class="label">Decoded English</div>
+        <div class="output-box">
+          <button class="copy-btn" id="decodeCopyBtn" onclick="copyText('decodeCopyBtn', 'decodedFull')">Copy</button>
+          <div class="decoded-output" id="decodedFull"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REFERENCE -->
+  <div class="panel" id="panel-reference">
+    <div class="card">
+      <h2>The Gourdin Alphabet Code</h2>
+      <p class="ref-intro">
+        Each letter maps to a unique typeable code — a mix of symbols, numbers, and characters
+        you can write on any keyboard. Words are separated by a space. Use <strong style="color:var(--gold)"> / </strong> between words when sharing as a single string.
+      </p>
+
+      <div class="legend">
+        <div class="legend-item"><span class="legend-sym">🌱</span><span class="legend-desc">seed symbols (toumin)</span></div>
+        <div class="legend-item"><span class="legend-sym">〰</span><span class="legend-desc">vine symbols (rinvel)</span></div>
+        <div class="legend-item"><span class="legend-sym">⊙</span><span class="legend-desc">gourd symbols (gourvou)</span></div>
+        <div class="legend-item"><span class="legend-sym"> / </span><span class="legend-desc">word separator</span></div>
+        <div class="legend-item"><span class="legend-sym"> // </span><span class="legend-desc">sentence end</span></div>
+      </div>
+
+      <div class="ref-grid" id="refGrid"></div>
+    </div>
+  </div>
+
+  <div class="footer-note">Gourvela minka · may you be complete · 🎃</div>
+</div>
+
+<script>
+// =============================================
+// THE GOURDIN CODE ALPHABET
+// Each letter = a unique typeable sequence
+// Inspired by pumpkins, seeds, vines, gourds
+// =============================================
+const CODE = {
+  a: '@>',      // seed opening outward
+  b: '8|',      // round like a gourd, with stem
+  c: '(~',      // curved vine
+  d: '|)',       // stem + round
+  e: '3=',      // three ribs of a pumpkin
+  f: 'f*',      // tendril flick
+  g: '9o',      // curl of a vine tip
+  h: '#^',      // trellis arch
+  i: '!i',      // single seed standing
+  j: ';)',       // vine hook + wink (it's a fun language)
+  k: '<|<',     // two leaves pointing
+  l: '|~',      // stem + trailing vine
+  m: '^v^',     // three bumps of a pumpkin top
+  n: '^v',      // two bumps
+  o: '0o',      // double gourd
+  p: 'p@',      // stem + seed
+  q: 'o?',      // gourd + question
+  r: 'r~',      // root tendril
+  s: '~s',      // winding vine
+  t: '+|',      // crossed stem
+  u: 'u0',      // scoop of a gourd
+  v: '\\//',    // two vines meeting
+  w: 'www',     // triple vine wave
+  x: '><',      // two vines crossing
+  y: 'y~',      // forked vine
+  z: 'z!',      // jagged frost line
+  ' ': ' / ',   // word separator
+};
+
+// Build reverse map for decoding
+const DECODE_MAP = {};
+for (const [letter, code] of Object.entries(CODE)) {
+  if (letter !== ' ') DECODE_MAP[code] = letter;
+}
+
+// Reference info for display
+const CODE_NAMES = {
+  a: 'seed opening',   b: 'gourd & stem',    c: 'curved vine',
+  d: 'stem & round',   e: 'pumpkin ribs',    f: 'tendril flick',
+  g: 'vine tip curl',  h: 'trellis arch',    i: 'single seed',
+  j: 'vine hook',      k: 'two leaves',      l: 'stem & vine',
+  m: 'triple bump',    n: 'double bump',     o: 'double gourd',
+  p: 'stem & seed',    q: 'gourd & query',   r: 'root tendril',
+  s: 'winding vine',   t: 'crossed stem',    u: 'gourd scoop',
+  v: 'vines meeting',  w: 'triple wave',     x: 'vines crossing',
+  y: 'forked vine',    z: 'frost line',
+};
+
+// =============================================
+// BUILD REFERENCE TABLE
+// =============================================
+function buildReference() {
+  const grid = document.getElementById('refGrid');
+  const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+  grid.innerHTML = letters.map(l => `
+    <div class="ref-row">
+      <span class="ref-letter">${l.toUpperCase()}</span>
+      <span class="ref-code">${CODE[l]}</span>
+      <span class="ref-name">${CODE_NAMES[l]}</span>
+    </div>
+  `).join('');
+}
+buildReference();
+
+// =============================================
+// ENCODE
+// =============================================
+function encode() {
+  const raw = document.getElementById('encodeInput').value;
+  if (!raw.trim()) return;
+
+  const lower = raw.toLowerCase();
+  let fullCode = '';
+  const chips = [];
+
+  for (let i = 0; i < lower.length; i++) {
+    const ch = lower[i];
+    if (CODE[ch] !== undefined) {
+      const coded = CODE[ch];
+      fullCode += coded;
+      if (ch === ' ') {
+        chips.push({ eng: '·', code: '/', isSpace: true });
+      } else {
+        chips.push({ eng: ch.toUpperCase(), code: coded, isSpace: false });
+      }
+    } else {
+      // Unknown char — pass through with brackets
+      fullCode += `[${ch}]`;
+      chips.push({ eng: ch, code: `[${ch}]`, isSpace: false });
+    }
+  }
+
+  fullCode += ' //'; // sentence end marker
+
+  document.getElementById('encodedFull').textContent = fullCode;
+  document.getElementById('encodeCopyBtn').dataset.val = fullCode;
+
+  // Breakdown chips
+  const breakdown = document.getElementById('encodedBreakdown');
+  breakdown.innerHTML = chips.map(c => `
+    <div class="letter-chip ${c.isSpace ? 'chip-space' : ''}">
+      <span class="chip-eng">${c.eng}</span>
+      <span class="chip-code">${c.code}</span>
+    </div>
+  `).join('');
+
+  showOutput('encodeOut');
+}
+
+// =============================================
+// DECODE
+// =============================================
+function decode() {
+  const raw = document.getElementById('decodeInput').value.trim();
+  if (!raw) return;
+
+  // Strip sentence-end marker
+  const cleaned = raw.replace(/\/\/\s*$/, '').trim();
+
+  // Split by word separator ' / '
+  const wordTokens = cleaned.split(' / ');
+  const words = [];
+
+  for (const wordToken of wordTokens) {
+    // Each word token is a run of letter codes with no spaces between them
+    // We need to match greedily from the known codes
+    const decoded = greedyDecode(wordToken.trim());
+    words.push(decoded);
+  }
+
+  const result = words.join(' ');
+  document.getElementById('decodedFull').textContent = result || '(nothing decoded)';
+  document.getElementById('decodeCopyBtn').dataset.val = result;
+  showOutput('decodeOut');
+}
+
+function greedyDecode(str) {
+  // Try to match codes from longest to shortest at each position
+  const codes = Object.keys(DECODE_MAP).sort((a, b) => b.length - a.length);
+  let result = '';
+  let i = 0;
+
+  while (i < str.length) {
+    let matched = false;
+    for (const code of codes) {
+      if (str.startsWith(code, i)) {
+        result += DECODE_MAP[code];
+        i += code.length;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      // Unknown character, pass through
+      result += str[i];
+      i++;
+    }
+  }
+  return result;
+}
+
+// =============================================
+// UI HELPERS
+// =============================================
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['encode','decode','reference'][i] === tab);
+  });
+  document.querySelectorAll('.panel').forEach((p, i) => {
+    p.classList.toggle('active', ['panel-encode','panel-decode','panel-reference'][i] === `panel-${tab}`);
+  });
+}
+
+function showOutput(id) {
+  const el = document.getElementById(id);
+  el.classList.add('visible');
+}
+
+function hideOutput(id) {
+  document.getElementById(id).classList.remove('visible');
+}
+
+function setEx(inputId, text) {
+  document.getElementById(inputId).value = text;
+}
+
+function copyText(btnId, sourceId) {
+  const btn = document.getElementById(btnId);
+  const val = btn.dataset.val || document.getElementById(sourceId).textContent;
+  navigator.clipboard.writeText(val).then(() => {
+    btn.textContent = 'Copied ✦';
+    setTimeout(() => btn.textContent = 'Copy', 1800);
+  });
+}
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    const active = document.querySelector('.panel.active').id;
+    if (active === 'panel-encode') encode();
+    else if (active === 'panel-decode') decode();
+  }
+});
+</script>
+</body>
+</html>
